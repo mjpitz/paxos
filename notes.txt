@@ -1,0 +1,95 @@
+https://www.youtube.com/watch?v=d7nAGI_NZPk
+
+3 roles: proposers, acceptors, learners
+
+nodes can take multiple roles, even all of them
+nodes must know how many acceptors a majority is (two majorities will always overlap in at least one node)
+nodes must be persistent: they can't forget what they accepted
+
+A "paxos run" aims at reaching a single consensus.
+Once a consensus is reached, it cannot progress to another consensus.
+In order to reach another consensus, a different paxos run must happen.
+
+
+Proposer wants to propose a certain value
+ => it sends "PREPARE IDp" to a majority (or all) of Acceptors.
+ => IDp must be unique, e.g. slotted timestamp in nanoseconds
+    => Proposer 1 chooses ID's 1,3,5,...
+    => Proposer 2 chooses ID's 2,4,6,...
+    Timeout? retry with a new (higher) IDp
+
+Acceptor receives a PREPARE message for IDp
+  => Did it promise to ignore requests with IDp
+     => Yes -> then ignore
+     => No -> will promise to ignore any request lower than IDp
+         Has it ever accepted anything? (assume accepted ID=IDa)
+         Yes -> Reply with PROMISE IDp accepted IDa, value
+         No -> Reply with PROMISE IDp
+
+If a majority of acceptors promise no ID < IDp can make it through
+
+Proposer gets a majority of PROMISE messages for a specific IDp:
+=> It sends ACCEPT-REQUEST IDp, VALUE to majority (or all) of acceptors.
+   (?) it picks any value it wants
+
+Acceptor receives an ACCEPT-REQUEST message for IDp, value:
+=> Did it promise to ignore requests with this IDp?
+  Yes -> then ignore
+  No -> Reply with ACCEPT IDp, value
+        also sent to all learners
+
+If a majority of acceptors accept IDp, value, consensus is reached.
+Consensus is and will always be on value (no necessarily IDp).
+
+Proposer or Learner get ACCEPT messages for IDp, value:
+If a proposer / learner get the majority of accept for a specific IDp,
+they know that consensus has been reached on value.
+ 
+
+(Proposer) -- [PREPARE N] -> (Acceptors)
+  ==> timeout? retry with higher
+
+(Acceptors) -- [PROMISE N] -> (Proposer)
+               [PROMISE N accepted IDa, value]
+
+(Proposer) -- [ACCEPT-REQUEST N, V] -> (Acceptors)
+
+(Acceptors) -- [ACCEPT N, V] -> (Proposer)
+                             -> (Learners)
+
+
+
+Practical case: DIstributed storage system based on paxos
+
+log pos 0
+
+start consensus on next log position
+
+
+
+Phase 1.
+(a) A proposer selects a proposal number n and sends a prepare
+request with number n to a majority of acceptors.
+
+(b) If an acceptor receives a prepare request with number n greater
+than that of any prepare request to which it has already responded,
+then it responds to the request with a promise not to accept any more
+proposals numbered less than n and with the highest-numbered proposal
+(if any) that is has accepted.
+
+Phase 2.
+(a) If the proposer receives a response to its prepare requests
+(numbered n) from a majority of acceptors, then it sends an accept
+request to each of those acceptors for a proposal numbered n with a
+value v, where v is the value of the highest numbered proposal among
+the responses, or is any value if the responses reported no proposals.
+
+(b) If an acceptor receives an accept request for a proposal numbered
+n, it accepts the proposal unless it has already responded to a prepare
+request having a number greater than n.
+
+Phase 3.
+To learn that a value has been chosen, a learner must find out that a
+proposal has been accepted by a majority of acceptors. The obvious algorithm
+is to have each acceptor, whenever it accepts a proposal, responds to all learners,
+sending them the proposal.

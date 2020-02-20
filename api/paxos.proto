@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package mjpitz.paxos;
+
+option go_package = "github.com/mjpitz/paxos/api";
+
+message EmptyMessage {}
+
+message Value {
+    bytes value = 5;
+}
+
+message Request {
+    uint64 id = 1;
+    uint32 attempt = 2;
+}
+
+message Proposal {
+    uint64 id = 1;
+
+    bytes value = 5;
+}
+
+message Promise {
+    uint64 id = 1;
+
+    Proposal accepted = 5;
+}
+
+message Record {
+    Promise promise = 1;
+    Proposal accept = 2;
+}
+
+service Proposer {
+    rpc Propose(Value) returns (EmptyMessage);
+}
+
+service Acceptor {
+    rpc Prepare(Request) returns (Promise);
+    rpc Accept(Proposal) returns (Proposal);
+    rpc Observe(Request) returns (stream Proposal);
+}
