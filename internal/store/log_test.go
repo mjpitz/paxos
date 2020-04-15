@@ -1,9 +1,11 @@
 package store_test
 
 import (
-	"github.com/mjpitz/paxos/internal/store"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/mjpitz/paxos/internal/store"
+
+	"github.com/stretchr/testify/require"
 )
 
 func e2e(t *testing.T, log store.Log) {

@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/cenkalti/backoff/v4"
-	"github.com/mjpitz/paxos/api"
-	"github.com/mjpitz/paxos/internal/members"
-	"github.com/sirupsen/logrus"
 	"sync"
 	"time"
+
+	"github.com/cenkalti/backoff/v4"
+
+	"github.com/mjpitz/paxos/api"
+	"github.com/mjpitz/paxos/internal/members"
+
+	"github.com/sirupsen/logrus"
 )
 
 func NewProposer(members map[string]api.AcceptorClient, generator api.IDGenerator) *Proposer {

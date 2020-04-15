@@ -3,12 +3,15 @@ package server
 import (
 	"context"
 	"fmt"
+	"sync"
+
 	"github.com/mjpitz/paxos/api"
 	"github.com/mjpitz/paxos/internal/store"
+
 	"github.com/sirupsen/logrus"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"sync"
 )
 
 func NewAcceptor(promiseLog, acceptLog store.Log) *Acceptor {

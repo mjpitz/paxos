@@ -2,11 +2,15 @@ package server
 
 import (
 	"context"
+
 	"github.com/cenkalti/backoff/v4"
+
 	"github.com/google/btree"
+
 	"github.com/mjpitz/paxos/api"
 	"github.com/mjpitz/paxos/internal/members"
 	"github.com/mjpitz/paxos/internal/store"
+
 	"github.com/sirupsen/logrus"
 )
 

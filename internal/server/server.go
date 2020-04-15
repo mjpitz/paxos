@@ -1,10 +1,12 @@
 package server
 
 import (
+	"net"
+
 	"github.com/mjpitz/paxos/api"
 	"github.com/mjpitz/paxos/internal/store"
+
 	"google.golang.org/grpc"
-	"net"
 )
 
 type Config struct {

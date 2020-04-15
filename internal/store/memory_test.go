@@ -1,8 +1,9 @@
 package store_test
 
 import (
-	"github.com/mjpitz/paxos/internal/store"
 	"testing"
+
+	"github.com/mjpitz/paxos/internal/store"
 )
 
 func TestMemory(t *testing.T) {

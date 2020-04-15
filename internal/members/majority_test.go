@@ -1,10 +1,12 @@
 package members_test
 
 import (
+	"testing"
+
 	"github.com/mjpitz/paxos/api"
 	"github.com/mjpitz/paxos/internal/members"
+
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestMajority(t *testing.T) {

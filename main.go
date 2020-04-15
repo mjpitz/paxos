@@ -3,17 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/mjpitz/paxos/api"
 	"github.com/mjpitz/paxos/internal/server"
+
 	"github.com/spf13/pflag"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/resolver"
 	"google.golang.org/grpc/resolver/manual"
-	"time"
 )
-
-var charset = "abcdefghijklmnopqrstuvwxyz" +
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456790"
 
 func runServer(config *server.Config, stop chan struct{}) {
 	svr, err := server.New(config)

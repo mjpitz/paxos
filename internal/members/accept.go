@@ -3,8 +3,9 @@ package members
 import (
 	"context"
 	"fmt"
-	"github.com/mjpitz/paxos/api"
 	"sync"
+
+	"github.com/mjpitz/paxos/api"
 )
 
 func accept(member api.AcceptorClient, ctx context.Context, in *api.Proposal, proposals chan *api.Proposal, wg *sync.WaitGroup) {
