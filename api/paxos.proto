@@ -27,11 +27,6 @@ message Promise {
     Proposal accepted = 5;
 }
 
-message Record {
-    Promise promise = 1;
-    Proposal accept = 2;
-}
-
 service Proposer {
     rpc Propose(Value) returns (EmptyMessage);
 }

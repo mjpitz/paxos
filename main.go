@@ -4,97 +4,87 @@ import (
 	"context"
 	"fmt"
 	"github.com/mjpitz/paxos/api"
-	"github.com/mjpitz/paxos/server"
-	"github.com/mjpitz/paxos/server/store"
+	"github.com/mjpitz/paxos/internal/server"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/backoff"
-	"net"
-	"os"
+	"google.golang.org/grpc/resolver"
+	"google.golang.org/grpc/resolver/manual"
+	"math/rand"
 	"time"
 )
 
-func propose(proposer api.ProposerClient, value string) {
-	for {
-		time.Sleep(time.Minute)
+var charset = "abcdefghijklmnopqrstuvwxyz" +
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456790"
 
-		proposeValue := &api.Value{
-			Value: []byte(value),
-		}
+func randomString() string {
+	b := make([]byte, 10)
+	for i := range b {
+		b[i] = charset[rand.Intn(len(charset))]
+	}
+	return string(b)
+}
 
-		logrus.Infof("PROPOSE %s", value)
-		if _, err := proposer.Propose(context.Background(), proposeValue); err != nil {
-			logrus.Error(err.Error())
-			break
-		}
+func runServer(config *server.Config, stop chan struct{}) {
+	svr, err := server.New(config)
+	if err != nil {
+		panic(err)
+	}
+
+	if err := svr.Start(stop); err != nil {
+		panic(err)
 	}
 }
 
 func main() {
-	serverId := uint64(0)
-	addresses := make([]string, 0)
-	bindAddress := "0.0.0.0"
-	port := 8080
+	stop := make(chan struct{})
 
-	command := &cobra.Command{
-		Use: "paxos",
-		Short: "Starts a paxos grpc server",
-		RunE: func(cmd *cobra.Command, args []string) error {
-
-
-			connectParams := grpc.ConnectParams{
-				Backoff: backoff.DefaultConfig,
-			}
-
-			acceptors := make([]api.AcceptorClient, len(addresses))
-
-			for i, address := range addresses {
-				cc, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithConnectParams(connectParams))
-				if err != nil {
-					return err
-				}
-				acceptors[i] = api.NewAcceptorClient(cc)
-			}
-
-			idGenerator := api.NewSequentialIDGenerator(serverId, uint64(len(addresses)))
-
-			decisionLog := store.NewInMemoryStore()
-
-			p := &server.Paxos{
-				Acceptors: acceptors,
-				DecisionLog: decisionLog,
-				IDGenerator: idGenerator,
-			}
-
-			svr := grpc.NewServer()
-			proposer, err := p.RegisterServer(svr)
-			if err != nil {
-				return err
-			}
-
-			value := fmt.Sprintf("server_%d", serverId)
-			go propose(proposer, value)
-
-			address := fmt.Sprintf("%s:%d", bindAddress, port)
-			logrus.Infof("starting grpc server on %s", address)
-
-			listener, err := net.Listen("tcp", address)
-			if err != nil {
-				return err
-			}
-			return svr.Serve(listener)
-		},
+	members := []string{
+		"localhost:8080",
+		"localhost:8081",
+		"localhost:8082",
 	}
 
-	flags := command.Flags()
-	flags.Uint64Var(&serverId, "server-id", serverId, "The id of the server")
-	flags.StringArrayVar(&addresses, "address", addresses, "The address of peers")
-	flags.StringVar(&bindAddress, "bind-address", bindAddress, "The address to bind to")
-	flags.IntVar(&port, "port", port, "The port to bind to")
+	addresses := make([]resolver.Address, len(members))
 
-	if err := command.Execute(); err != nil {
-		logrus.Error(err.Error())
-		os.Exit(1)
+	for i, member := range members {
+		logrus.Infof("starting server %s", member)
+		addresses[i] = resolver.Address{
+			Addr: member,
+		}
+
+		go runServer(&server.Config{
+			ServerID: uint64(i),
+			Members: members,
+			BindNetwork: "tcp",
+			BindAddress: member,
+		}, stop)
+	}
+
+	r, cleanup := manual.GenerateAndRegisterManualResolver()
+	defer cleanup()
+
+	r.InitialState(resolver.State{
+		Addresses: addresses,
+	})
+
+	target := fmt.Sprintf("%s:///unused", r.Scheme())
+	cc, err := grpc.Dial(target,
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy": "round_robin"}`))
+	if err != nil {
+		panic(err)
+	}
+
+	proposer := api.NewProposerClient(cc)
+
+	for {
+		time.Sleep(5 * time.Second)
+
+		value := randomString()
+
+		_, _ = proposer.Propose(context.Background(), &api.Value{
+			Value: []byte(value),
+		})
 	}
 }
