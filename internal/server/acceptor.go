@@ -13,10 +13,10 @@ import (
 
 func NewAcceptor(promiseLog, acceptLog store.Log) *Acceptor {
 	return &Acceptor{
-		mu: &sync.Mutex{},
+		mu:         &sync.Mutex{},
 		promiseLog: promiseLog,
-		acceptLog: acceptLog,
-		updates: make(map[api.Acceptor_ObserveServer]chan *api.Proposal),
+		acceptLog:  acceptLog,
+		updates:    make(map[api.Acceptor_ObserveServer]chan *api.Proposal),
 	}
 }
 
@@ -24,7 +24,7 @@ type Acceptor struct {
 	mu *sync.Mutex
 
 	promiseLog store.Log
-	acceptLog store.Log
+	acceptLog  store.Log
 
 	updates map[api.Acceptor_ObserveServer]chan *api.Proposal
 }
@@ -57,7 +57,7 @@ func (a *Acceptor) Prepare(ctx context.Context, prepareAttempt *api.Request) (*a
 	}
 
 	promise := &api.Promise{
-		Id: prepareAttempt.Id,
+		Id:       prepareAttempt.Id,
 		Accepted: accepted,
 	}
 

@@ -8,16 +8,16 @@ type IDGenerator interface {
 
 func NewSequentialIDGenerator(offset, step uint64) IDGenerator {
 	return &sequentialIDGenerator{
-		mu: &sync.Mutex{},
+		mu:     &sync.Mutex{},
 		offset: offset,
-		step: step,
+		step:   step,
 	}
 }
 
 type sequentialIDGenerator struct {
-	mu *sync.Mutex
+	mu     *sync.Mutex
 	offset uint64
-	step uint64
+	step   uint64
 }
 
 func (s *sequentialIDGenerator) Next() (id uint64, err error) {

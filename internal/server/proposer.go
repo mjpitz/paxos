@@ -14,8 +14,8 @@ import (
 
 func NewProposer(members map[string]api.AcceptorClient, generator api.IDGenerator) *Proposer {
 	return &Proposer{
-		mu: &sync.Mutex{},
-		members: members,
+		mu:        &sync.Mutex{},
+		members:   members,
 		generator: generator,
 	}
 }
@@ -23,7 +23,7 @@ func NewProposer(members map[string]api.AcceptorClient, generator api.IDGenerato
 type Proposer struct {
 	mu *sync.Mutex
 
-	members map[string]api.AcceptorClient
+	members   map[string]api.AcceptorClient
 	generator api.IDGenerator
 }
 
@@ -58,7 +58,7 @@ func (p *Proposer) Propose(ctx context.Context, v *api.Value) (*api.EmptyMessage
 		}
 
 		prepare := &api.Request{
-			Id: id,
+			Id:      id,
 			Attempt: uint32(attempt),
 		}
 
@@ -72,7 +72,7 @@ func (p *Proposer) Propose(ctx context.Context, v *api.Value) (*api.EmptyMessage
 		}
 
 		proposal := &api.Proposal{
-			Id: id,
+			Id:    id,
 			Value: val,
 		}
 

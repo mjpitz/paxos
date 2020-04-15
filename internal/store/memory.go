@@ -28,7 +28,7 @@ func (l *memoryLog) Append(obj Entry) error {
 func (l *memoryLog) Since(id uint64) ([]Entry, error) {
 	results := make([]Entry, 0)
 
-	l.tree.AscendGreaterOrEqual(Key(id + 1), func(i btree.Item) bool {
+	l.tree.AscendGreaterOrEqual(Key(id+1), func(i btree.Item) bool {
 		results = append(results, i.(Entry))
 		return true
 	})
@@ -37,4 +37,3 @@ func (l *memoryLog) Since(id uint64) ([]Entry, error) {
 }
 
 var _ Log = &memoryLog{}
-

@@ -33,8 +33,8 @@ func Prepare(members map[string]api.AcceptorClient, ctx context.Context, in *api
 
 	var accepted *api.Proposal
 
-	for i := len(promises) ; i > 0; i-- {
-		promise := <- promises
+	for i := len(promises); i > 0; i-- {
+		promise := <-promises
 
 		if promise.Accepted != nil {
 			if accepted == nil || accepted.Id < promise.Accepted.Id {
@@ -44,7 +44,7 @@ func Prepare(members map[string]api.AcceptorClient, ctx context.Context, in *api
 	}
 
 	return &api.Promise{
-		Id: in.Id,
+		Id:       in.Id,
 		Accepted: accepted,
 	}, nil
 }

@@ -11,7 +11,7 @@ import (
 )
 
 type entry struct {
-	id uint64
+	id        uint64
 	proposals map[string]*api.Proposal
 }
 
@@ -22,22 +22,22 @@ func (a *entry) Less(b btree.Item) bool {
 }
 
 type Decision struct {
-	server string
+	server   string
 	proposal *api.Proposal
 }
 
 func NewLearner(members map[string]api.AcceptorClient, acceptLog store.Log) *Learner {
 	return &Learner{
-		members: members,
+		members:   members,
 		acceptLog: acceptLog,
-		tree: make(map[uint64]map[string]*api.Proposal),
+		tree:      make(map[uint64]map[string]*api.Proposal),
 	}
 }
 
 type Learner struct {
-	members map[string]api.AcceptorClient
+	members   map[string]api.AcceptorClient
 	acceptLog store.Log
-	tree map[uint64]map[string]*api.Proposal
+	tree      map[uint64]map[string]*api.Proposal
 }
 
 func (l *Learner) learnFrom(server string, member api.AcceptorClient, decisions chan *Decision) {
@@ -53,7 +53,7 @@ func (l *Learner) learnFrom(server string, member api.AcceptorClient, decisions 
 
 	backoffConfig.Reset()
 
-	_ = backoff.Retry(func () error {
+	_ = backoff.Retry(func() error {
 		id := uint64(0)
 		e, _ := l.acceptLog.Last()
 		if e != nil {

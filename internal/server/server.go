@@ -8,8 +8,8 @@ import (
 )
 
 type Config struct {
-	ServerID uint64
-	Members []string
+	ServerID    uint64
+	Members     []string
 	BindNetwork string
 	BindAddress string
 }
@@ -41,18 +41,18 @@ func New(config *Config) (*Server, error) {
 	learner := NewLearner(members, acceptLog)
 
 	return &Server{
-		config: config,
+		config:   config,
 		proposer: proposer,
 		acceptor: acceptor,
-		learner: learner,
+		learner:  learner,
 	}, nil
 }
 
 type Server struct {
-	config *Config
+	config   *Config
 	proposer *Proposer
 	acceptor *Acceptor
-	learner *Learner
+	learner  *Learner
 }
 
 func (s *Server) Serve() {

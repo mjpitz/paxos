@@ -21,7 +21,7 @@ func e2e(t *testing.T, log store.Log) {
 	require.Equal(t, base, last.GetId())
 
 	for i := 0; i < 5; i++ {
-		id := base + uint64(i + 1)
+		id := base + uint64(i+1)
 
 		err = log.Append(store.Key(id))
 		require.Nil(t, err)
@@ -32,7 +32,7 @@ func e2e(t *testing.T, log store.Log) {
 	require.Len(t, entries, 5)
 
 	for i := 0; i < 5; i++ {
-		id := base + uint64(i + 1)
+		id := base + uint64(i+1)
 
 		require.Equal(t, id, entries[i].GetId())
 	}
