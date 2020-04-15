@@ -59,7 +59,7 @@ they know that consensus has been reached on value.
 
 
 
-Practical case: DIstributed storage system based on paxos
+Practical case: Distributed storage system based on paxos
 
 log pos 0
 
