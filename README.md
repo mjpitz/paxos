@@ -58,18 +58,3 @@ $ ./paxos \
     --accept-log boltdb://logs/2/accept.log \
     --decision-log boltdb://logs/2/decision.log
 ```
-
-As the program runs, you should be able to inspect shas of the log files:
-
-```bash
-$ find logs/ -type f | xargs sha256sum 
-7f9fc12159567d21113663035918699f4b7e73ab00af3570067427617925e687  logs/0/accept.log
-7f9fc12159567d21113663035918699f4b7e73ab00af3570067427617925e687  logs/0/decision.log
-604bbf65a60b99732b055a760adff32e422101ceccfc633994ece5dbe3547c57  logs/0/promise.log
-7f9fc12159567d21113663035918699f4b7e73ab00af3570067427617925e687  logs/1/accept.log
-7f9fc12159567d21113663035918699f4b7e73ab00af3570067427617925e687  logs/1/decision.log
-604bbf65a60b99732b055a760adff32e422101ceccfc633994ece5dbe3547c57  logs/1/promise.log
-7f9fc12159567d21113663035918699f4b7e73ab00af3570067427617925e687  logs/2/accept.log
-7f9fc12159567d21113663035918699f4b7e73ab00af3570067427617925e687  logs/2/decision.log
-604bbf65a60b99732b055a760adff32e422101ceccfc633994ece5dbe3547c57  logs/2/promise.log
-```
