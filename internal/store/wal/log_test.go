@@ -1,31 +1,31 @@
-package store_test
+package wal_test
 
 import (
 	"testing"
 
-	"github.com/mjpitz/paxos/internal/store"
+	"github.com/mjpitz/paxos/internal/store/wal"
 
 	"github.com/stretchr/testify/require"
 )
 
-func e2e(t *testing.T, log store.Log) {
+func e2e(t *testing.T, log wal.Log) {
 	base := uint64(1234)
 
 	last, err := log.Last()
 	require.Nil(t, err)
 	require.Nil(t, last)
 
-	err = log.Append(store.Key(base))
+	err = log.Append(&wal.Entry{Id: base, Data: make([]byte, 0)})
 	require.Nil(t, err)
 
 	last, err = log.Last()
 	require.Nil(t, err)
-	require.Equal(t, base, last.GetId())
+	require.Equal(t, base, last.Id)
 
 	for i := 0; i < 5; i++ {
 		id := base + uint64(i+1)
 
-		err = log.Append(store.Key(id))
+		err = log.Append(&wal.Entry{Id: id, Data: make([]byte, 0)})
 		require.Nil(t, err)
 	}
 
@@ -36,6 +36,6 @@ func e2e(t *testing.T, log store.Log) {
 	for i := 0; i < 5; i++ {
 		id := base + uint64(i+1)
 
-		require.Equal(t, id, entries[i].GetId())
+		require.Equal(t, int(id), int(entries[i].Id))
 	}
 }

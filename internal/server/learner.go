@@ -30,7 +30,7 @@ type Decision struct {
 	proposal *api.Proposal
 }
 
-func NewLearner(members map[string]api.AcceptorClient, acceptLog store.Log) *Learner {
+func NewLearner(members map[string]api.AcceptorClient, acceptLog store.ProposalStore) *Learner {
 	return &Learner{
 		members:   members,
 		acceptLog: acceptLog,
@@ -40,7 +40,7 @@ func NewLearner(members map[string]api.AcceptorClient, acceptLog store.Log) *Lea
 
 type Learner struct {
 	members   map[string]api.AcceptorClient
-	acceptLog store.Log
+	acceptLog store.ProposalStore
 	tree      map[uint64]map[string]*api.Proposal
 }
 

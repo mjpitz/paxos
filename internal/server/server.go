@@ -16,7 +16,7 @@ type Config struct {
 	BindAddress string
 }
 
-func New(config *Config) (*Server, error) {
+func New(config *Config, promiseLog store.PromiseStore, acceptLog, decisionLog store.ProposalStore) (*Server, error) {
 	offset := config.ServerID
 	step := uint64(len(config.Members))
 
@@ -35,12 +35,10 @@ func New(config *Config) (*Server, error) {
 	}
 
 	idGenerator := api.NewSequentialIDGenerator(offset, step)
-	promiseLog := store.Memory()
-	acceptLog := store.Memory()
 
 	proposer := NewProposer(members, idGenerator)
 	acceptor := NewAcceptor(promiseLog, acceptLog)
-	learner := NewLearner(members, acceptLog)
+	learner := NewLearner(members, decisionLog)
 
 	return &Server{
 		config:   config,
@@ -57,7 +55,7 @@ type Server struct {
 	learner  *Learner
 }
 
-func (s *Server) Serve() {
+func (s *Server) serve() {
 	listener, err := net.Listen(s.config.BindNetwork, s.config.BindAddress)
 	if err != nil {
 		panic(err)
@@ -74,7 +72,7 @@ func (s *Server) Serve() {
 }
 
 func (s *Server) Start(stopCh chan struct{}) error {
-	go s.Serve()
+	go s.serve()
 	go s.learner.Learn(stopCh)
 
 	return nil

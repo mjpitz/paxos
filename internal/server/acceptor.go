@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func NewAcceptor(promiseLog, acceptLog store.Log) *Acceptor {
+func NewAcceptor(promiseLog store.PromiseStore, acceptLog store.ProposalStore) *Acceptor {
 	return &Acceptor{
 		mu:         &sync.Mutex{},
 		promiseLog: promiseLog,
@@ -26,8 +26,8 @@ func NewAcceptor(promiseLog, acceptLog store.Log) *Acceptor {
 type Acceptor struct {
 	mu *sync.Mutex
 
-	promiseLog store.Log
-	acceptLog  store.Log
+	promiseLog store.PromiseStore
+	acceptLog  store.ProposalStore
 
 	updates map[api.Acceptor_ObserveServer]chan *api.Proposal
 }
@@ -38,24 +38,24 @@ func (a *Acceptor) Prepare(ctx context.Context, prepareAttempt *api.Request) (*a
 
 	logrus.Infof("PREPARE %d", prepareAttempt.Id)
 
-	lastPromiseEntry, err := a.promiseLog.Last()
+	lastPromise, err := a.promiseLog.Last()
 	if err != nil {
 		return nil, err
 	}
 
-	if lastPromiseEntry != nil && prepareAttempt.Id <= lastPromiseEntry.(*api.Promise).Id {
+	if lastPromise != nil && prepareAttempt.Id <= lastPromise.Id {
 		return nil, fmt.Errorf("proposed id is less than current Id")
 	}
 
 	var accepted *api.Proposal
 	if prepareAttempt.Attempt > 1 {
-		lastAcceptEntry, err := a.acceptLog.Last()
+		lastAccept, err := a.acceptLog.Last()
 		if err != nil {
 			return nil, err
 		}
 
-		if lastAcceptEntry != nil {
-			accepted = lastAcceptEntry.(*api.Proposal)
+		if lastAccept != nil {
+			accepted = lastAccept
 		}
 	}
 
@@ -75,12 +75,10 @@ func (a *Acceptor) Accept(ctx context.Context, proposal *api.Proposal) (*api.Pro
 
 	logrus.Infof("ACCEPT %d", proposal.Id)
 
-	lastPromiseEntry, err := a.promiseLog.Last()
+	lastPromise, err := a.promiseLog.Last()
 	if err != nil {
 		return nil, err
 	}
-
-	lastPromise := lastPromiseEntry.(*api.Promise)
 
 	if lastPromise != nil && proposal.Id < lastPromise.Id {
 		return nil, fmt.Errorf("proposed id is less than current Id")
@@ -119,7 +117,7 @@ func (a *Acceptor) Observe(req *api.Request, stream api.Acceptor_ObserveServer) 
 	}
 
 	for _, entry := range entries {
-		if err := stream.Send(entry.(*api.Proposal)); err != nil {
+		if err := stream.Send(entry); err != nil {
 			return status.Error(codes.Canceled, "stream has ended.")
 		}
 	}
