@@ -17,8 +17,13 @@ type Config struct {
 }
 
 func New(config *Config, promiseLog store.PromiseStore, acceptLog, decisionLog store.ProposalStore) (*Server, error) {
-	offset := config.ServerID
+	p , err := decisionLog.Last()
+	if err != nil {
+		return nil, err
+	}
+
 	step := uint64(len(config.Members))
+	offset := ((p.Id / step) * step) + config.ServerID
 
 	members := make(map[string]api.AcceptorClient)
 	for _, member := range config.Members {
