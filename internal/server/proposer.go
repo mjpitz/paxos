@@ -10,12 +10,13 @@ import (
 	"github.com/cenkalti/backoff/v4"
 
 	"github.com/mjpitz/paxos/api"
+	"github.com/mjpitz/paxos/internal/idgen"
 	"github.com/mjpitz/paxos/internal/members"
 
 	"github.com/sirupsen/logrus"
 )
 
-func NewProposer(members map[string]api.AcceptorClient, generator api.IDGenerator) *Proposer {
+func NewProposer(members map[string]api.AcceptorClient, generator idgen.IDGenerator) *Proposer {
 	return &Proposer{
 		mu:        &sync.Mutex{},
 		members:   members,
@@ -27,7 +28,7 @@ type Proposer struct {
 	mu *sync.Mutex
 
 	members   map[string]api.AcceptorClient
-	generator api.IDGenerator
+	generator idgen.IDGenerator
 }
 
 func (p *Proposer) Propose(ctx context.Context, v *api.Value) (*api.EmptyMessage, error) {

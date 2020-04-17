@@ -4,6 +4,7 @@ import (
 	"net"
 
 	"github.com/mjpitz/paxos/api"
+	"github.com/mjpitz/paxos/internal/idgen"
 	"github.com/mjpitz/paxos/internal/store"
 
 	"google.golang.org/grpc"
@@ -17,7 +18,7 @@ type Config struct {
 }
 
 func New(config *Config, promiseLog store.PromiseStore, acceptLog, decisionLog store.ProposalStore) (*Server, error) {
-	p , err := decisionLog.Last()
+	p, err := decisionLog.Last()
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +40,7 @@ func New(config *Config, promiseLog store.PromiseStore, acceptLog, decisionLog s
 		members[member] = api.NewAcceptorClient(cc)
 	}
 
-	idGenerator := api.NewSequentialIDGenerator(offset, step)
+	idGenerator := idgen.NewSequentialIDGenerator(offset, step)
 
 	proposer := NewProposer(members, idGenerator)
 	acceptor := NewAcceptor(promiseLog, acceptLog)

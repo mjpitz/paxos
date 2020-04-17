@@ -1,10 +1,6 @@
-package api
+package idgen
 
 import "sync"
-
-type IDGenerator interface {
-	Next() (id uint64, err error)
-}
 
 func NewSequentialIDGenerator(offset, step uint64) IDGenerator {
 	return &sequentialIDGenerator{
