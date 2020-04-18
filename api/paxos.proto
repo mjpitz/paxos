@@ -28,7 +28,7 @@ message Promise {
 }
 
 service Proposer {
-    rpc Propose(Value) returns (EmptyMessage);
+    rpc Propose(Value) returns (Value);
 }
 
 service Acceptor {

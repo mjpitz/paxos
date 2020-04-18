@@ -1,9 +1,7 @@
 package server
 
 import (
-	"bytes"
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -31,7 +29,7 @@ type Proposer struct {
 	generator idgen.IDGenerator
 }
 
-func (p *Proposer) Propose(ctx context.Context, v *api.Value) (*api.EmptyMessage, error) {
+func (p *Proposer) Propose(ctx context.Context, v *api.Value) (*api.Value, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -84,14 +82,18 @@ func (p *Proposer) Propose(ctx context.Context, v *api.Value) (*api.EmptyMessage
 			return err
 		}
 
-		if !bytes.Equal(val, v.GetValue()) {
-			return backoff.Permanent(fmt.Errorf("lost consensus"))
-		}
+		val = v.GetValue()
 
 		return nil
 	}, backoffConfig)
 
-	return &api.EmptyMessage{}, err
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.Value{
+		Value: val,
+	}, nil
 }
 
 var _ api.ProposerServer = &Proposer{}
