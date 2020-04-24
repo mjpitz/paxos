@@ -73,7 +73,7 @@ func (a *Acceptor) Accept(ctx context.Context, proposal *api.Proposal) (*api.Pro
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	logrus.Infof("ACCEPT %d", proposal.Id)
+	logrus.Infof("ACCEPT_REQUEST %d", proposal.Id)
 
 	lastPromise, err := a.promiseLog.Last()
 	if err != nil {
@@ -84,11 +84,11 @@ func (a *Acceptor) Accept(ctx context.Context, proposal *api.Proposal) (*api.Pro
 		return nil, fmt.Errorf("proposed id is less than current Id")
 	}
 
-	logrus.Infof("ACCEPT_REQUEST %d", proposal.Id)
-
 	if err = a.acceptLog.Append(proposal); err != nil {
 		return nil, err
 	}
+
+	logrus.Infof("ACCEPT %d", proposal.Id)
 
 	for _, stream := range a.updates {
 		stream <- proposal

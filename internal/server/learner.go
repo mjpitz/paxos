@@ -7,6 +7,8 @@ import (
 
 	"github.com/google/btree"
 
+	"github.com/hashicorp/golang-lru"
+
 	"github.com/mjpitz/paxos/api"
 	"github.com/mjpitz/paxos/internal/members"
 	"github.com/mjpitz/paxos/internal/store"
@@ -30,18 +32,23 @@ type Decision struct {
 	proposal *api.Proposal
 }
 
-func NewLearner(members map[string]api.AcceptorClient, acceptLog store.ProposalStore) *Learner {
+func NewLearner(members map[string]api.AcceptorClient, acceptLog store.ProposalStore, historySize int) *Learner {
+	cache, err := lru.NewARC(historySize)
+	if err != nil {
+		panic(err)
+	}
+
 	return &Learner{
 		members:   members,
 		acceptLog: acceptLog,
-		tree:      make(map[uint64]map[string]*api.Proposal),
+		tree:      cache,
 	}
 }
 
 type Learner struct {
 	members   map[string]api.AcceptorClient
 	acceptLog store.ProposalStore
-	tree      map[uint64]map[string]*api.Proposal
+	tree      *lru.ARCCache
 }
 
 func (l *Learner) learnFrom(server string, member api.AcceptorClient, decisions chan *Decision) {
@@ -102,13 +109,16 @@ func (l *Learner) Learn(stop chan struct{}) {
 			proposal := decision.proposal
 			server := decision.server
 
-			if _, ok := l.tree[proposal.Id]; !ok {
-				l.tree[proposal.Id] = make(map[string]*api.Proposal)
+			var proposals map[string]*api.Proposal
+
+			if val, ok := l.tree.Get(proposal.Id); ok {
+				proposals = val.(map[string]*api.Proposal)
+			} else {
+				proposals = make(map[string]*api.Proposal)
 			}
 
-			l.tree[proposal.Id][server] = proposal
-
-			if len(l.tree[proposal.Id]) == majority {
+			proposals[server] = proposal
+			if len(proposals) == majority {
 				logrus.Infof("DECISION %d, %s", proposal.Id, string(proposal.Value))
 
 				// record proposal
@@ -119,20 +129,9 @@ func (l *Learner) Learn(stop chan struct{}) {
 					continue
 				}
 
-				// clean up all ids up to proposal
-				// ordered log, ordered response, ordered chan
-				// this means that all ids up to idx were not accepted
-
-				keysToDelete := make([]uint64, 0)
-				for key := range l.tree {
-					if key <= proposal.Id {
-						keysToDelete = append(keysToDelete, key)
-					}
-				}
-
-				for _, key := range keysToDelete {
-					delete(l.tree, key)
-				}
+				l.tree.Remove(proposal.Id)
+			} else {
+				l.tree.Add(proposal.Id, proposals)
 			}
 		}
 	}

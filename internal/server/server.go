@@ -23,8 +23,13 @@ func New(config *Config, promiseLog store.PromiseStore, acceptLog, decisionLog s
 		return nil, err
 	}
 
+	start := config.ServerID
+	if p != nil {
+		start = p.Id
+	}
+
 	step := uint64(len(config.Members))
-	offset := ((p.Id / step) * step) + config.ServerID
+	offset := ((start / step) * step) + config.ServerID
 
 	members := make(map[string]api.AcceptorClient)
 	for _, member := range config.Members {
@@ -44,7 +49,7 @@ func New(config *Config, promiseLog store.PromiseStore, acceptLog, decisionLog s
 
 	proposer := NewProposer(members, idGenerator)
 	acceptor := NewAcceptor(promiseLog, acceptLog)
-	learner := NewLearner(members, decisionLog)
+	learner := NewLearner(members, decisionLog, 10)
 
 	return &Server{
 		config:   config,
