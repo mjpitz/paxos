@@ -1,43 +1,24 @@
 package server
 
 import (
-	"net"
-
 	"github.com/mjpitz/paxos/api"
+	"github.com/mjpitz/paxos/internal/config"
 	"github.com/mjpitz/paxos/internal/idgen"
 	"github.com/mjpitz/paxos/internal/store"
+	"github.com/mjpitz/paxos/internal/store/wal"
+
+	"github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc"
 )
 
-type Config struct {
-	ServerID    uint64
-	Members     []string
-	BindNetwork string
-	BindAddress string
-}
-
-func New(config *Config, promiseLog store.PromiseStore, acceptLog, decisionLog store.ProposalStore) (*Server, error) {
-	p, err := decisionLog.Last()
-	if err != nil {
-		return nil, err
-	}
-
-	start := config.ServerID
-	if p != nil {
-		start = p.Id
-	}
-
-	step := uint64(len(config.Members))
-	offset := ((start / step) * step) + config.ServerID
-
+func NewForConfig(
+	clusterConfig *config.Cluster,
+	serverConfig *config.Server,
+) (*Server, error) {
 	members := make(map[string]api.AcceptorClient)
-	for _, member := range config.Members {
-		dialOptions := []grpc.DialOption{
-			grpc.WithInsecure(),
-		}
-
-		cc, err := grpc.Dial(member, dialOptions...)
+	for _, member := range clusterConfig.Members {
+		cc, err := grpc.Dial(member, grpc.WithInsecure())
 		if err != nil {
 			return nil, err
 		}
@@ -45,46 +26,97 @@ func New(config *Config, promiseLog store.PromiseStore, acceptLog, decisionLog s
 		members[member] = api.NewAcceptorClient(cc)
 	}
 
+	promiseWAL, err := wal.New(serverConfig.PromiseLogPath)
+	if err != nil {
+		return nil, err
+	}
+
+	acceptWAL, err := wal.New(serverConfig.AcceptLogPath)
+	if err != nil {
+		return nil, err
+	}
+
+	decisionWAL, err := wal.New(serverConfig.DecisionLogPath)
+	if err != nil {
+		return nil, err
+	}
+
+	promiseLog := store.NewPromiseStore(promiseWAL)
+	acceptLog := store.NewProposalStore(acceptWAL)
+	decisionLog := store.NewProposalStore(decisionWAL)
+
+	p, err := decisionLog.Last()
+	if err != nil {
+		return nil, err
+	}
+
+	start := serverConfig.ServerID
+	if p != nil {
+		start = p.Id
+	}
+
+	step := uint64(len(clusterConfig.Members))
+	offset := ((start / step) * step) + serverConfig.ServerID
+
 	idGenerator := idgen.NewSequentialIDGenerator(offset, step)
 
+	return New(members, idGenerator, promiseLog, acceptLog, decisionLog, serverConfig.HistorySize), nil
+}
+
+func New(
+	members map[string]api.AcceptorClient,
+	idGenerator idgen.IDGenerator,
+	promiseLog store.PromiseStore,
+	acceptLog, decisionLog store.ProposalStore,
+	historySize int,
+) *Server {
 	proposer := NewProposer(members, idGenerator)
 	acceptor := NewAcceptor(promiseLog, acceptLog)
-	learner := NewLearner(members, decisionLog, 10)
+	learner := NewLearner(members, decisionLog, historySize)
+	stop := make(chan struct{})
 
 	return &Server{
-		config:   config,
-		proposer: proposer,
-		acceptor: acceptor,
-		learner:  learner,
-	}, nil
+		promiseLog:  promiseLog,
+		acceptLog:   acceptLog,
+		decisionLog: decisionLog,
+		proposer:    proposer,
+		acceptor:    acceptor,
+		learner:     learner,
+		stop:        stop,
+	}
 }
 
 type Server struct {
-	config   *Config
-	proposer *Proposer
-	acceptor *Acceptor
-	learner  *Learner
+	promiseLog  store.PromiseStore
+	acceptLog   store.ProposalStore
+	decisionLog store.ProposalStore
+	proposer    *Proposer
+	acceptor    *Acceptor
+	learner     *Learner
+	stop        chan struct{}
 }
 
-func (s *Server) serve() {
-	listener, err := net.Listen(s.config.BindNetwork, s.config.BindAddress)
-	if err != nil {
-		panic(err)
+func (s *Server) Stop() {
+	close(s.stop)
+
+	if err := s.promiseLog.Close(); err != nil {
+		logrus.Errorf("failed to close promise log: %v", err)
 	}
 
-	svr := grpc.NewServer()
+	if err := s.acceptLog.Close(); err != nil {
+		logrus.Errorf("failed to close accept log: %v", err)
+	}
 
+	if err := s.decisionLog.Close(); err != nil {
+		logrus.Errorf("failed to close decision log: %v", err)
+	}
+}
+
+func (s *Server) Register(svr *grpc.Server) {
 	api.RegisterProposerServer(svr, s.proposer)
 	api.RegisterAcceptorServer(svr, s.acceptor)
-
-	if err := svr.Serve(listener); err != nil {
-		panic(err)
-	}
 }
 
-func (s *Server) Start(stopCh chan struct{}) error {
-	go s.serve()
-	go s.learner.Learn(stopCh)
-
-	return nil
+func (s *Server) Start() {
+	go s.learner.Learn(s.stop)
 }

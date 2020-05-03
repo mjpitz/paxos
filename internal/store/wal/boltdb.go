@@ -37,6 +37,10 @@ type boltdbLog struct {
 	db *bbolt.DB
 }
 
+func (l *boltdbLog) Close() error {
+	return l.db.Close()
+}
+
 func (l *boltdbLog) Last() (*Entry, error) {
 	var key []byte
 	var value []byte

@@ -1,9 +1,11 @@
 package idgen_test
 
 import (
-	"github.com/mjpitz/paxos/internal/idgen"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/mjpitz/paxos/internal/idgen"
+
+	"github.com/stretchr/testify/require"
 )
 
 func sequentialCommon(t *testing.T, start, step, numGenerations uint64) {

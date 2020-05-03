@@ -1,6 +1,10 @@
 package wal
 
-import "github.com/google/btree"
+import (
+	"io"
+
+	"github.com/google/btree"
+)
 
 type Entry struct {
 	Id   uint64
@@ -14,6 +18,7 @@ func (a *Entry) Less(b btree.Item) bool {
 var _ btree.Item = &Entry{}
 
 type Log interface {
+	io.Closer
 	Last() (*Entry, error)
 	Append(entry *Entry) error
 	Since(id uint64) ([]*Entry, error)

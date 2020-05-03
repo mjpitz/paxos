@@ -1,0 +1,60 @@
+version: "3.8"
+
+services:
+  client-0:
+    hostname: client-0
+    image: mjpitz/paxos:latest
+    entrypoint: paxosc
+    command:
+      - --value=client-0
+      - --members=server-0:8080,server-1:8080,server-2:8080
+
+  client-1:
+    hostname: client-1
+    image: mjpitz/paxos:latest
+    entrypoint: paxosc
+    command:
+      - --value=client-1
+      - --members=server-0:8080,server-1:8080,server-2:8080
+
+  server-0:
+    hostname: server-0
+    image: mjpitz/paxos:latest
+    entrypoint: paxosd
+    tmpfs:
+      - /logs
+    command:
+      - --server-id=0
+      - --members=server-0:8080,server-1:8080,server-2:8080
+      - --bind-address=server-0:8080
+      - --promise-log=boltdb:///logs/promise.log
+      - --accept-log=boltdb:///logs/accept.log
+      - --decision-log=boltdb:///logs/decision.log
+
+  server-1:
+    hostname: server-1
+    image: mjpitz/paxos:latest
+    entrypoint: paxosd
+    tmpfs:
+      - /logs
+    command:
+      - --server-id=1
+      - --members=server-0:8080,server-1:8080,server-2:8080
+      - --bind-address=server-1:8080
+      - --promise-log=boltdb:///logs/promise.log
+      - --accept-log=boltdb:///logs/accept.log
+      - --decision-log=boltdb:///logs/decision.log
+
+  server-2:
+    hostname: server-2
+    image: mjpitz/paxos:latest
+    entrypoint: paxosd
+    tmpfs:
+      - /logs
+    command:
+      - --server-id=2
+      - --members=server-0:8080,server-1:8080,server-2:8080
+      - --bind-address=server-2:8080
+      - --promise-log=boltdb:///logs/promise.log
+      - --accept-log=boltdb:///logs/accept.log
+      - --decision-log=boltdb:///logs/decision.log

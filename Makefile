@@ -10,16 +10,28 @@ fmt:
 	go-groups -w .
 	gofmt -s -w .
 
-deps:
-	go get -v ./...
+clean:
+	rm -rf logs/
+	rm -rf vendor/
+	rm -f paxosc
+	rm -f paxosd
+
+vendor: go.mod go.sum
+	go mod vendor
 
 test:
 	go vet ./...
 	#golint -set_exit_status ./...
 	go test -v ./...
 
-generate:
+api/paxos.pb.go: api/paxos.proto
 	protoc -I=. -I=$(GOPATH)/src --gogo_out=plugins=grpc:$(GOPATH)/src api/paxos.proto
 
+generate: api/paxos.pb.go
+
 build:
-	go build
+	go build ./cmds/paxosc/
+	go build ./cmds/paxosd/
+
+docker:
+	docker build .

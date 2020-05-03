@@ -1,6 +1,8 @@
 package store
 
 import (
+	"io"
+
 	"github.com/mjpitz/paxos/api"
 	"github.com/mjpitz/paxos/internal/store/encoding"
 	"github.com/mjpitz/paxos/internal/store/wal"
@@ -14,6 +16,7 @@ func NewProposalStore(log wal.Log) ProposalStore {
 }
 
 type ProposalStore interface {
+	io.Closer
 	Last() (*api.Proposal, error)
 	Append(proposal *api.Proposal) error
 	Since(id uint64) ([]*api.Proposal, error)
@@ -22,6 +25,10 @@ type ProposalStore interface {
 type proposalStore struct {
 	log wal.Log
 	enc *encoding.Encoding
+}
+
+func (s *proposalStore) Close() error {
+	return s.log.Close()
 }
 
 func (s *proposalStore) Last() (*api.Proposal, error) {

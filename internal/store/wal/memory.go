@@ -12,6 +12,10 @@ type memoryLog struct {
 	tree *btree.BTree
 }
 
+func (l *memoryLog) Close() error {
+	return nil
+}
+
 func (l *memoryLog) Last() (*Entry, error) {
 	last := l.tree.Max()
 	if last != nil {
