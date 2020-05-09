@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package mjpitz.paxos;
+package mjpitz.paxos.api;
 
 option go_package = "github.com/mjpitz/paxos/api";
 

@@ -6,7 +6,6 @@ services:
     image: mjpitz/paxos:latest
     entrypoint: paxosc
     command:
-      - --value=client-0
       - --members=server-0:8080,server-1:8080,server-2:8080
 
   client-1:
@@ -14,7 +13,6 @@ services:
     image: mjpitz/paxos:latest
     entrypoint: paxosc
     command:
-      - --value=client-1
       - --members=server-0:8080,server-1:8080,server-2:8080
 
   server-0:

@@ -1,4 +1,7 @@
-FROM golang:1.14-alpine3.11 AS builder
+ARG GO_VERSION=1.14
+ARG ALPINE_VERSION=3.11
+
+FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS builder
 
 RUN apk update && apk add build-base make git
 
@@ -12,7 +15,7 @@ COPY . .
 
 RUN make build
 
-FROM alpine:3.11
+FROM alpine:${ALPINE_VERSION}
 
 COPY --from=builder /go/src/paxos/paxosc /usr/bin/paxosc
 COPY --from=builder /go/src/paxos/paxosd /usr/bin/paxosd
