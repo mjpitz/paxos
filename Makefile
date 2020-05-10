@@ -34,4 +34,4 @@ build:
 	go build ./cmds/paxosd/
 
 docker:
-	docker build .
+	docker build -t mjpitz/paxos .

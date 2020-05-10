@@ -82,8 +82,6 @@ func (p *Proposer) Propose(ctx context.Context, v *api.Value) (*api.Value, error
 			return err
 		}
 
-		val = v.GetValue()
-
 		return nil
 	}, backoffConfig)
 
