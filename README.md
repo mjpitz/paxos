@@ -21,6 +21,13 @@ Through this mechanism, you can elect leaders, or get consensus on a value.
 
 ## Try it out
 
+For those using `docker`, you should be able to spin this up pretty quickly using `docker-compose`.
+
+```
+docker-compose up
+```
+
+Otherwise, you'll need to build the binaries yourself.
 I probably won't publish a library or binaries from this for a while.
 For now, stick to building locally. 
 
