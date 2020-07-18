@@ -14,8 +14,7 @@ They do this through the use of a single, server streaming API.
 Learners send along their last accepted id and Acceptors stream all records after that point.
 
 `Acceptors` keep track of all the promises they make and proposals they accept.
-Currently, this is implemented as an in memory log backed by a btree.
-This can easily be replaced with a boltdb implementation for on disk support. 
+Currently, this can be either a boltdb file or in memory.
 
 `Proposer` provides a single `Propose` rpc that implements a single paxos run.
 Through this mechanism, you can elect leaders, or get consensus on a value.
