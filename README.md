@@ -1,5 +1,5 @@
 # paxos
-![Google Analytics](https://www.google-analytics.com/collect?v=1&tid=UA-172921913-1&cid=555&t=event&ec=repo&ea=open&dp=mjpitz%2Fpaxos&dt=mjpitz%2Fpaxos)
+![Google Analytics](https://www.google-analytics.com/collect?v=1&tid=UA-172921913-1&cid=555&t=event&ec=repo&ea=open&dp=paxos&dt=paxos)
 
 Golang implementation of Paxos using protobuf and gRPC.
 Currently implemented more as a demonstration, less for practicality.
